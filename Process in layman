@@ -1,0 +1,9 @@
+Airflow DAG schedules a Python task.
+
+Python task fetches and transforms API data → sends it to Kafka topic.
+
+Kafka topic is monitored by Control Center, and the schema is validated by Schema Registry.
+
+Spark Streaming job reads data from Kafka → processes/transforms it further if needed.
+
+Spark job writes data to Cassandra for persistent storage and querying.
