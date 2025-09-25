@@ -1,0 +1,57 @@
+first define your extraction , transformation and loading the data into a certain schema logic in kafka_stream.py file
+after your data extraction create a compose.yml file to define your container and your images for your services of docker 
+we are using here kafka , schema registry and control center and apache zookeeper , airfloww will just be for scheduling these certain events 
+so control center will technically learn from the schema registry for kafka to livestream and visualise the data 
+and all of this is managed using apache zookeeper .
+
+after all this we are going to reate a system design using apache spark where RDD are created with 1 master being subduing the work to the workers.
+
+
+
+from datetime import datetime
+from airflow import DAG
+from airflow.providers.standard.operators.python import PythonOperator
+import requests
+import json
+
+default_args = {
+    'owner': 'airscholar',
+    'start_date': datetime(2025, 9, 3, 10, 0)
+}
+
+def get_data():
+    res = requests.get('https://randomuser.me/api/')
+    res = res.json()
+    res = res['results'][0]   # ✅ correct key
+    return res
+
+def format_data(res):
+    data = {}
+    location = res['location']
+    data['first_name'] = res['name']['first']
+    data['last_name'] = res['name']['last']
+    data['gender'] = res['gender']
+    data['address'] = f"{str(location['street']['number'])} {location['street']['name']}, {location['city']}, {location['state']}, {location['country']}"
+    data['postcode'] = location['postcode']
+    data['email'] = res['email']
+    data['username'] = res['login']['username']
+    data['dob'] = res['dob']['date']
+    data['registered_date'] = res['registered']['date']
+    data['phone'] = res['phone']
+    data['picture'] = res['picture']['medium']
+    return data
+
+def stream_data():
+    from kafka import KafkaProducer
+    import time
+    res = get_data()
+    res = format_data(res)
+    #print(json.dumps(res, indent=3))
+    producer = KafkaProducer(bootstrap_servers=['localhost:9092'],max_block_ms=5000)
+    producer.send('users_created',json.dumps(res).encode('utf-8'))
+    producer.flush()
+
+
+# Test locally
+if __name__ == "__main__":
+    stream_data()

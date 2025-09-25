@@ -1,0 +1,11 @@
+API (RandomUser) 
+   ↓
+Airflow DAG (scheduler)
+   ↓
+Kafka (topic: users_created) → Schema Registry enforces schema
+   ↓
+Spark Structured Streaming (process, enrich, aggregate)
+   ↓
+Cassandra (store processed data for fast querying)
+   ↓
+BI Dashboard / APIs / Control Center (monitoring)
